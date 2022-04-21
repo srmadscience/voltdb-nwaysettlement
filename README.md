@@ -14,7 +14,7 @@ In a traditional RDBMS we'd have a user_balances table with 3 rows, each consist
 Instead of having a single table per user we have two. One is a Balance table, and the other is a Transaction Table. Your *actual* Balance is the amount in the Balance table plus any transactions that are marked as DONE. Transactions can be PENDING (new), FAILED or DONE. The transaction table also has an extra column called USER_COUNT. the person paying sets USER_COUNT to how many people are involved. "Effective_Date" is set to a value several milliseconds in the future. The client application creates a row in the Transaction Table for each person involved:
 
 USER | TransactionId | Status | Amount  | Effective_Date
-:- |:- |:- |:- |:- |:- | 
+|:- |:- |:- |:- |:- | 
 ALICE | 1 | PENDING | -103 |  calltime +3ms
 BIGCORP | 1 | PENDING | 100 |  calltime +3ms
  WESHIP | 1 | PENDING | 3 |  calltime +3ms
