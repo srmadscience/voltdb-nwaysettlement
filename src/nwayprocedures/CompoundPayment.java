@@ -29,7 +29,7 @@ import org.voltdb.VoltCompoundProcedure;
 import org.voltdb.client.ClientResponse;
 
 public class CompoundPayment extends VoltCompoundProcedure {
-    
+
     public static final String STC_START = "STC_START";
     public static final String STC_LAUNCH = "STC_LAUNCH";
     public static final String STC_PAYERDONE = "STC_PAYERDONE";
@@ -71,12 +71,13 @@ public class CompoundPayment extends VoltCompoundProcedure {
         }
 
         // Build stages
-        newStageList(this::launchTransactions).then(this::markPayerDone).then(this::finishPayees).then(this::finish).build();
+        newStageList(this::launchTransactions).then(this::markPayerDone).then(this::finishPayees).then(this::finish)
+                .build();
         return 0L;
     }
 
     private void launchTransactions(ClientResponse[] unused) {
-        
+
         this.setAppStatusString(STC_LAUNCH);
 
         long payerAmount = 0;
@@ -92,7 +93,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
 
     // Process results of first stage, i.e. lookups, and perform updates
     private void markPayerDone(ClientResponse[] resp) {
-        
+
         this.setAppStatusString(STC_PAYERDONE);
 
         StringBuffer errorList = checkForErrors(resp, StartTransactionPayer.PENDING_CODE, payeeId.length + 1);
@@ -107,7 +108,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
     }
 
     private void finishPayees(ClientResponse[] resp) {
-        
+
         this.setAppStatusString(STC_ALLDONE);
 
         StringBuffer errorList = checkForErrors(resp, StartTransactionPayer.PAYERDONE_CODE, 1);
@@ -118,7 +119,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
             }
 
             queueProcedureCall("SetTransactionEntryDone", payerId, txnId);
-            
+
         } else {
             reportError(StartTransactionPayer.CANTSTART, "Unable to finishPayees: " + errorList.toString());
         }
@@ -142,7 +143,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
     private StringBuffer checkForErrors(ClientResponse[] resp, byte okCode, int expectedResponses) {
 
         StringBuffer errorList = new StringBuffer();
-        
+
         if (resp.length != expectedResponses) {
             errorList.append("Quantity Error: got " + resp.length + ", expected " + expectedResponses);
         }

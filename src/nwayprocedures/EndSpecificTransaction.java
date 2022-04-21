@@ -22,7 +22,6 @@
  */
 package nwayprocedures;
 
-
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
@@ -36,7 +35,7 @@ public class EndSpecificTransaction extends VoltProcedure {
             "UPDATE user_transactions SET tran_status = ?, tran_status_explanation = ?, done_date = NOW, queue_date = null, user_count = null WHERE Transaction_id = ? ;");
 
     public VoltTable[] run(long txnId, String status, String tranStatusExplanation) throws VoltAbortException {
-        
+
         voltQueueSQL(finishTransaction, status, tranStatusExplanation, txnId);
         return voltExecuteSQL(true);
 

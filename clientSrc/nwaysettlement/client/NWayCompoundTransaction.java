@@ -49,14 +49,13 @@ public class NWayCompoundTransaction implements ProcedureCallback {
     boolean isValid = true;
     SafeHistogramCache statsCache = SafeHistogramCache.getInstance();
     HashMap<Long, Long> payeeList = new HashMap<Long, Long>();
-  
 
     public NWayCompoundTransaction(long payerId, long txnId, long delay) {
         super();
         this.payerId = payerId;
         this.txnId = txnId;
         this.delay = delay;
-       
+
     }
 
     public void addPayee(long payee, long amount) {
@@ -88,8 +87,8 @@ public class NWayCompoundTransaction implements ProcedureCallback {
 
             }
 
-                     c.callProcedure(this, "CompoundPayment", payerId, txnId, payees, payeeAmounts, effectiveDate);
-   
+            c.callProcedure(this, "CompoundPayment", payerId, txnId, payees, payeeAmounts, effectiveDate);
+
         } catch (Exception e) {
             isValid = false;
             statsCache.reportLatency("ERROR_" + e.getMessage(), startDate.getTime(), "", HISTOGRAM_SIZE_MS);
@@ -102,7 +101,7 @@ public class NWayCompoundTransaction implements ProcedureCallback {
         if (response.getStatus() != ClientResponse.SUCCESS) {
             isValid = false;
             statsCache.reportLatency("ERROR_" + response.getStatusString(), startDate.getTime(), "", HISTOGRAM_SIZE_MS);
-        } else if (! response.getAppStatusString().equals(CompoundPayment.STC_FINISH)) {
+        } else if (!response.getAppStatusString().equals(CompoundPayment.STC_FINISH)) {
             msg(response.getAppStatusString());
             isValid = false;
             statsCache.reportLatency("ERROR_" + response.getAppStatusString(), startDate.getTime(), "",
@@ -114,9 +113,9 @@ public class NWayCompoundTransaction implements ProcedureCallback {
             // TODO
             // theChecker.addTransactionToCheck(this);
         } else {
-            
+
             statsCache.reportLatency("FAIL", startDate.getTime(), "", HISTOGRAM_SIZE_MS);
-            
+
         }
 
     }
@@ -178,7 +177,7 @@ public class NWayCompoundTransaction implements ProcedureCallback {
     public Date getStartCheckDate() {
         return startCheckDate;
     }
-    
+
     /**
      * Print a formatted message.
      *
@@ -192,6 +191,5 @@ public class NWayCompoundTransaction implements ProcedureCallback {
         System.out.println(strDate + ":" + message);
 
     }
-
 
 }

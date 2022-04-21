@@ -22,7 +22,6 @@
  */
 package nwayprocedures;
 
-
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
@@ -34,15 +33,15 @@ public class SetTransactionEntryDone extends VoltProcedure {
 
     public static final SQLStmt finishTransaction = new SQLStmt(
             "UPDATE user_transactions SET tran_status = 'DONE', done_date = NOW, queue_date = null, user_count = null "
-            + "WHERE  userid = ? AND Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
+                    + "WHERE  userid = ? AND Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
 
     public VoltTable[] run(long userId, long txnId) throws VoltAbortException {
         // Find oldest pending record...
         voltQueueSQL(finishTransaction, EXPECT_ONE_ROW, userId, txnId);
-        
+
         this.setAppStatusCode(StartTransactionPayer.DONE_CODE);
         this.setAppStatusString(StartTransactionPayer.DONE_MESSAGE);
-        
+
         return voltExecuteSQL(true);
 
     }

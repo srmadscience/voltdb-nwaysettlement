@@ -76,7 +76,7 @@ public class TestClient {
             NullCallback nc = new NullCallback();
 
             msg("Create " + userCount + " balances");
-            
+
             for (int i = 0; i < userCount; i++) {
                 c.callProcedure(nc, "user_balances.UPSERT", i + offset, 1000000, new Date());
 
@@ -90,14 +90,14 @@ public class TestClient {
                     currentMs = System.currentTimeMillis();
                     tpThisMs = 0;
                 }
-                
+
                 if (i % 100000 == 1) {
-                    msg("On balance #" + i );
+                    msg("On balance #" + i);
                 }
             }
 
             c.drain();
-            
+
             msg("Create " + userCount + " balances ...  done");
 
             msg("DELETE FROM user_transactions;");
@@ -207,8 +207,7 @@ public class TestClient {
             StatsHistogram aHistogram = statsCache.get(statName);
 
             for (float pctile : pctiles) {
-                reportStats(c, "lcy", "lcy", "LATENCY_" + pctile, statName,
-                        aHistogram.getLatencyPct(pctile));
+                reportStats(c, "lcy", "lcy", "LATENCY_" + pctile, statName, aHistogram.getLatencyPct(pctile));
             }
 
             long count = (long) aHistogram.getEventTotal();

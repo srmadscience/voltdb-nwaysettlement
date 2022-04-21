@@ -22,7 +22,6 @@
  */
 package nwayprocedures;
 
-
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
@@ -37,11 +36,12 @@ public class SetPayerDone extends VoltProcedure {
 
     public VoltTable[] run(long userId, long txnId, String oldStatus) throws VoltAbortException {
         // Find oldest pending record...
-        voltQueueSQL(updateTransaction, EXPECT_ONE_ROW, StartTransactionPayer.PAYERDONE_MESSAGE, userId, txnId, oldStatus);
-        
+        voltQueueSQL(updateTransaction, EXPECT_ONE_ROW, StartTransactionPayer.PAYERDONE_MESSAGE, userId, txnId,
+                oldStatus);
+
         this.setAppStatusCode(StartTransactionPayer.PAYERDONE_CODE);
         this.setAppStatusString(StartTransactionPayer.PAYERDONE_MESSAGE);
-        
+
         return voltExecuteSQL(true);
 
     }

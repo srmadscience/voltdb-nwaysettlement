@@ -1,6 +1,5 @@
 package nwaysettlement.client;
 
-
 /* This file is part of VoltDB.
  * Copyright (C) 2008-2022 VoltDB Inc.
  *
@@ -24,13 +23,12 @@ package nwaysettlement.client;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 import org.voltdb.client.ClientResponse;
 import org.voltdb.client.ProcedureCallback;
 
 /**
- * Simple callback that complains if something went badly
- * wrong.
+ * Simple callback that complains if something went badly wrong.
+ * 
  * @author drolfe
  *
  */
@@ -38,7 +36,7 @@ public class ComplainOnErrorCallback implements ProcedureCallback {
 
     @Override
     public void clientCallback(ClientResponse arg0) throws Exception {
-        
+
         if (arg0.getStatus() != ClientResponse.SUCCESS) {
             TestClient.msg("Error Code " + arg0.getStatusString());
         }

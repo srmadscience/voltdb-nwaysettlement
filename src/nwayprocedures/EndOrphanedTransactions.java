@@ -38,8 +38,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
 
     public static final SQLStmt getPayerdoneTransactions = new SQLStmt(
             "SELECT userid, Transaction_id, effective_date, insert_date " + "FROM user_transactions t "
-                    + "WHERE tran_status = 'PAYERDONE'  "
-                    + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
+                    + "WHERE tran_status = 'PAYERDONE'  " + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
 
     public static final SQLStmt finishTransaction = new SQLStmt(
             "UPDATE user_transactions SET tran_status = 'DONE', done_date = NOW, queue_date = null, user_count = null "
@@ -47,8 +46,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
 
     public static final SQLStmt getStalePendingTransactions = new SQLStmt(
             "SELECT userid, Transaction_id, effective_date, insert_date " + "FROM user_transactions t "
-                    + "WHERE tran_status = 'PENDING' "
-                    + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
+                    + "WHERE tran_status = 'PENDING' " + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
 
     public static final SQLStmt cancelTransaction = new SQLStmt(
             "UPDATE user_transactions SET tran_status = 'FAILED', done_date = NOW, queue_date = null, user_count = null "
@@ -84,7 +82,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
         final Date cutoffDate = new Date(this.getTransactionTime().getTime() - minTranAgeMs);
 
         // Find oldest payerdone record...
-        voltQueueSQL(getPayerdoneTransactions,tranCount);
+        voltQueueSQL(getPayerdoneTransactions, tranCount);
         VoltTable payerdoneRecords = voltExecuteSQL()[0];
 
         if (payerdoneRecords.getRowCount() > 0) {
@@ -94,24 +92,22 @@ public class EndOrphanedTransactions extends VoltProcedure {
             int finishedTxParties = 0;
 
             while (payerdoneRecords.advanceRow()) {
-                
+
                 TimestampType insertDate = payerdoneRecords.getTimestampAsTimestamp("insert_date");
-                
+
                 if (insertDate.asExactJavaDate().after(cutoffDate)) {
-                    skippedPayerDoneCount = payerdoneRecords.getRowCount() -  payerdoneRecords.getActiveRowIndex() + 1;
+                    skippedPayerDoneCount = payerdoneRecords.getRowCount() - payerdoneRecords.getActiveRowIndex() + 1;
                     break;
                 }
 
                 if (firstPayerDone == null) {
                     firstPayerDone = insertDate;
                 }
-                
-                
 
                 voltQueueSQL(finishTransaction, payerdoneRecords.getLong("userid"),
                         payerdoneRecords.getLong("Transaction_id"));
-                voltQueueSQL(reportFixes, payerdoneRecords.getLong("Transaction_id")
-                        ,this.getTransactionTime(),"DONE", "PAYERDONE, Completed by EndOrphanedTransactions");
+                voltQueueSQL(reportFixes, payerdoneRecords.getLong("Transaction_id"), this.getTransactionTime(), "DONE",
+                        "PAYERDONE, Completed by EndOrphanedTransactions");
             }
 
             VoltTable[] finishResults = voltExecuteSQL();
@@ -124,9 +120,9 @@ public class EndOrphanedTransactions extends VoltProcedure {
             }
 
             finishedTxParties = finishedTxParties / 2;
-            
-            voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "skippedPayerDoneCount",
-                    skippedPayerDoneCount);
+
+            voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement",
+                    "skippedPayerDoneCount", skippedPayerDoneCount);
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "forceFinishedTxs",
                     finishedTxCount);
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement",
@@ -138,21 +134,21 @@ public class EndOrphanedTransactions extends VoltProcedure {
         }
 
         // Find oldest pending record...
-        voltQueueSQL(getStalePendingTransactions,tranCount);
+        voltQueueSQL(getStalePendingTransactions, tranCount);
         VoltTable staleRecords = voltExecuteSQL()[0];
 
         if (staleRecords.getRowCount() > 0) {
-            
+
             int skippedDoneCount = 0;
             int staleTxCount = 0;
             int staleTxParties = 0;
 
             while (staleRecords.advanceRow()) {
-                
+
                 TimestampType insertDate = staleRecords.getTimestampAsTimestamp("insert_date");
-                
+
                 if (insertDate.asExactJavaDate().after(cutoffDate)) {
-                    skippedDoneCount = staleRecords.getRowCount() -  staleRecords.getActiveRowIndex() + 1;
+                    skippedDoneCount = staleRecords.getRowCount() - staleRecords.getActiveRowIndex() + 1;
                     break;
                 }
 
@@ -160,18 +156,16 @@ public class EndOrphanedTransactions extends VoltProcedure {
                     firstPayerDone = insertDate;
                 }
 
-
                 if (firstStalePending == null) {
                     firstStalePending = staleRecords.getTimestampAsTimestamp("effective_date");
                 }
 
                 voltQueueSQL(cancelTransaction, staleRecords.getLong("userid"), staleRecords.getLong("Transaction_id"));
-                voltQueueSQL(reportFailures, staleRecords.getLong("Transaction_id")
-                        ,this.getTransactionTime(),StartTransactionPayer.STALE, "PENDING, Cancelled by EndOrphanedTransactions");
-                               
+                voltQueueSQL(reportFailures, staleRecords.getLong("Transaction_id"), this.getTransactionTime(),
+                        StartTransactionPayer.STALE, "PENDING, Cancelled by EndOrphanedTransactions");
+
             }
 
- 
             VoltTable[] finishResults = voltExecuteSQL();
 
             staleTxCount = finishResults.length;
@@ -180,7 +174,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
                 finishResult.advanceRow();
                 staleTxParties += finishResult.getLong(0);
             }
-            
+
             staleTxParties = staleTxParties / 2;
 
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "skippedDoneCount",
@@ -192,11 +186,10 @@ public class EndOrphanedTransactions extends VoltProcedure {
             if (firstStalePending != null) {
                 voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "pendingLag",
                         this.getTransactionTime().getTime() - firstStalePending.asExactJavaDate().getTime());
-               
-            }else {
-                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "pendingLag",
-                        0);
-               
+
+            } else {
+                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "pendingLag", 0);
+
             }
 
         }
@@ -205,17 +198,17 @@ public class EndOrphanedTransactions extends VoltProcedure {
                 && r.nextInt(RANDOM_STAT_INTERVAL) == 0)
 
         {
-            String[] statsToBeSetToZero = {"skippedPayerDoneCount","forceFinishedTxs","forceFinishedTxMembers", "payerDoneLag","skippedDoneCount","staleTxs","staleTxMembers","pendingLag"};
-            
-            for (int i=0; i < statsToBeSetToZero.length; i++) {
-                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", statsToBeSetToZero[i], 0);
+            String[] statsToBeSetToZero = { "skippedPayerDoneCount", "forceFinishedTxs", "forceFinishedTxMembers",
+                    "payerDoneLag", "skippedDoneCount", "staleTxs", "staleTxMembers", "pendingLag" };
+
+            for (int i = 0; i < statsToBeSetToZero.length; i++) {
+                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement",
+                        statsToBeSetToZero[i], 0);
             }
-         }
+        }
 
         return voltExecuteSQL();
 
     }
-
-
 
 }
