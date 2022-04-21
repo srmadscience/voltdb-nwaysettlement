@@ -36,9 +36,7 @@ If a node has failed then a database task (which volt will always have running o
 
 ### Failure after the Payer has been marked as finished ###
 
-If this happens the Compound Procedure will attempt to undo the work it has done. This will happen if, for example, Alice doesn't have enough money.
-
-If a node has failed then a database task (which volt will always have running on a surviving node) will forcibly finish the transaction using a multi partition transaction within a few milliseconds
+If this happens the then a database task (which volt will always have running on a surviving node) will forcibly finish the transaction using a [multi partition transaction](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/src/nwayprocedures/EndOrphanedTransactions.java) within a few milliseconds
 
 
 
