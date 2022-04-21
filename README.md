@@ -30,7 +30,7 @@ This entire process is fast (<1ms) and looks like one event from the viewpoint o
 
 ### Failure before the Payer has been marked as finished ###
 
-If this happens the Compound Procedure will attempt to undo the work it has done. This will happen if, for example, Alice doesn't have enough money.
+If this happens the  [Compound Procedure](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/src/nwayprocedures/CompoundPayment.java) will attempt to undo the work it has done. This will happen if, for example, Alice doesn't have enough money.
 
 If a node has failed then a database task (which volt will always have running on a surviving node) will do the same cleanup using a multi partition transaction within a few milliseconds.
 
