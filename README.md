@@ -5,9 +5,9 @@
 Imagine we have a payments system for several hundred thousand users. Most are customers. A handful are either vendors or shippers. We thus have many transactions that look like this:
 
 
-    User ALICE spends 103 Euros. 100 Goes to BIGCORP and 3 goes to WESHIP.
+    User ALICE spends 3 Euros. 2 Goes to BIGCORP and 1 goes to WESHIP.
     
-In a traditional RDBMS we'd have a user_balances table with 3 rows, each consisting of a name and a balance. A transaction would consist of locking ALICE's row, reducing the balance by 103 if possible, and then locking and incrementing the balances of BIGCORP and WESHIP. Then, and only them, is the transaction committed.  From the time the lock is taken out to when the transaction finishes nodody can make any changes to ALICE, BIGCORP, or WESHIP. To make things much worse there might be another transaction from FRED where he's using OTHERSHIP to get something from BIGCORP. A massive web of complex locking dependencies flares into existance, and all activity grinds to a halt at random intervals for no obvious reason. Research done by Dr. Stonebraker reveals that adding CPU cores or extra servers doesn't help this problem. Neither does NoSQL. 
+In a traditional RDBMS we'd have a user_balances table with 3 rows, each consisting of a name and a balance. A transaction would consist of locking ALICE's row, reducing the balance by 3 if possible, and then locking and incrementing the balances of BIGCORP and WESHIP. Then, and only them, is the transaction committed.  From the time the lock is taken out to when the transaction finishes nodody can make any changes to ALICE, BIGCORP, or WESHIP. To make things much worse there might be another transaction from FRED where he's using OTHERSHIP to get something from BIGCORP. A massive web of complex locking dependencies flares into existance, and all activity grinds to a halt at random intervals for no obvious reason. Research done by Dr. Stonebraker reveals that adding CPU cores or extra servers doesn't help this problem. Neither does NoSQL. 
 
 ## How we solve it ##
 
@@ -15,9 +15,9 @@ Instead of having a single table per user we have two. One is a Balance table, a
 
 USER | TransactionId | Status | Amount  | Effective_Date
 |:- |:- |:- |:- |:- | 
-ALICE | 1 | PENDING | -103 |  calltime +3ms
-BIGCORP | 1 | PENDING | 100 |  calltime +3ms
- WESHIP | 1 | PENDING | 3 |  calltime +3ms
+ALICE | 1 | PENDING | -3 |  calltime +3ms
+BIGCORP | 1 | PENDING | 2 |  calltime +3ms
+ WESHIP | 1 | PENDING | 1 |  calltime +3ms
 
 The client program calls a Compound Procedure that in turn fires off async requests to the partitions that own each account and waits for responses.  Note the Effective_Date column - we allow time for all the rows to show up. The actual offset depends on you situation.  The  requests don't just blindly insert pending rows. They do sanity checking, such as whether ALICE does actually have 103 Euros to spend, and whether BIGCORP and WESHIP are real users that can accept payments. If the incoming request for a user doesn't make sense the procedure won't create a transaction record.
 
