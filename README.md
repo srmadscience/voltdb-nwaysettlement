@@ -36,45 +36,7 @@ If a node has failed then a database task (which volt will always have running o
 
 ### Failure after the Payer has been marked as finished ###
 
-If this happens the then a database task (which volt will always have running on a surviving node) will forcibly finish the transaction using a [multi partition transaction](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/src/nwayprocedures/EndOrphanedTransactions.java) within a few milliseconds
-
-
-
-
-
-By now 3ms have passed, and a scheduled task running every 0.3ms on the server has woken up. It does several things:
-
-* It finds the earliest PENDING transaction:
-
-| Effective_Date |
-| :- |
-| calltime +3ms |
-
-* It uses that effective_date to get records from that point in time up to now where user_count is not null:
-
-USER | TransactionId | Status | Amount | User_Count | Effective_Date
-| :- |:- |:- |:- |:- | 
-ALICE | 1 | PENDING | -103 | 3 | calltime +3ms
-
-* It then hits a view that groups the pending transactions by transction_id:
-
- TransactionId |  User_Count | Count(*)
-| :- |:- |:- 
- 1 | PENDING |  3 
- 
-It now knows all the most pressing transactions, how many rows they are supposed to have (column User_count in step 2) and how many rows they do have (column count(*) in step 3). If these two numbers match it update all the rows for that transaction_id to 'DONE'. If they don't we update them to 'FAILED'. In most cases all the transactions for a given millisecond are valid, so we just say:
-
-    WHERE effective_date = ? AND transaction_status = 'PENDING'
-    
-in a single SQL Statement. 
-
-If some of them have failed we pass in a list of successful transasations by adding
-
-    AND transaction_id IN ?
-
-to the SQL statement.
-
-Some time this after the client - having waited for the record to be processed - queries its balance. Doing so is a single partition transaction that causes the DONE transactions to be added to their balance and deleted.
+If this happens the then a database task (which volt will always have running on a surviving node) will forcibly finish the transaction using a [multi partition transaction](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/src/nwayprocedures/EndOrphanedTransactions.java) within a few milliseconds.
 
 ## Why it's fast ##
 
@@ -85,15 +47,16 @@ Some time this after the client - having waited for the record to be processed -
 ## Why it works ##
 
 * The individual inserts into the transactions table are done by a stored procedure that handles basic sanity related questions, such as whether the user exists and whether they have enough money. 
-* The only way a transaction can go from PENDING to DONE is if the server side process updates the rows involved.
+* The only way a transaction can go from PENDING to PAYERDONE to DONE is if the server side process updates the rows involved.
 * This update only happens if the correct number of rows have been created.
 
 ## What an outside observer would see ##
 
-* They use a client API that's a bit slow but either returns DONE or FAILED. 
+* They use a client API that's a bit slow but either returns DONE, CANTSTART or CANTFINISH.
+* CANTFINISH means the database task finished the transaction. 
 * The database is ACID:
 	* Atomic: Either all the elements of a transaction happen or none of them do.
-	* Consistent: At no point can an outside observer look at the system and see DONE transaction whose Amount does not add up to zero. 
+	* Consistent: At no point can an outside observer look at the system and see DONE transaction whose Amount does not add up to zero and whose effective data is in the past. 
 	* Isolation: With the obvious exception of a user running out of money the order transactions reach the system is immaterial. 
 	* Durable: DONE and FAILED transactions are Durable. PENDING transactions have a life expectancy of around 3ms before changing to DONE or FAILED.
 
