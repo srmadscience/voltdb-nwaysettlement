@@ -41,7 +41,7 @@ If this happens the then a database task (which volt will always have running on
 ## Why it's fast ##
 
 * The legwork of creating the transaction data is done by async single partition procedures.
-* While we use a multi partition write to finish the transactions, it only has 3 trips across the JNI bridge and only issues 4 or 5 SQL statements each pass.
+* While we use a multi partition write to finish the transactions, this is only when something has gone wrong. Under normal circumstances the system is all single partition calls, as the multi partition cleanup task has nothing to do.
 * Updating a user's balance is a single partition process that happens when a user reads their balance, at which point DONE transactions are accounted for.
 
 ## Why it works ##
