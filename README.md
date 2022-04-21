@@ -26,6 +26,20 @@ When the client program gets responses from all 3 requests it checks to see if t
 ![NWay](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/docs/nway.png "NWay")
 
 
+This entire process is fast (<1ms) and looks like one event from the viewpoint of the client. The obvious question is how does it cope with node failures?
+
+### Failure before the Payer has been marked as finished ###
+
+If this happens the Compound Procedure will attempt to undo the work it has done. This will happen if, for example, Alice doesn't have enough money.
+
+If a node has failed then a database task (which volt will always have running on a surviving node) will do the same cleanup using a multi partition transaction within a few milliseconds.
+
+### Failure after the Payer has been marked as finished ###
+
+If this happens the Compound Procedure will attempt to undo the work it has done. This will happen if, for example, Alice doesn't have enough money.
+
+If a node has failed then a database task (which volt will always have running on a surviving node) will forcibly finish the transaction using a multi partition transaction within a few milliseconds
+
 
 
 
