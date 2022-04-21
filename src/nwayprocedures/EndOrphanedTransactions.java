@@ -132,7 +132,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement",
                     "forceFinishedTxMembers", finishedTxParties);
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "payerDoneLag",
-                    this.getTransactionTime().getTime() - firstPayerDone.getTime());
+                    this.getTransactionTime().getTime() - firstPayerDone.asExactJavaDate().getTime());
 
             voltExecuteSQL();
         }
@@ -191,7 +191,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
                     staleTxParties);
             if (firstStalePending != null) {
                 voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "pendingLag",
-                        this.getTransactionTime().getTime() - firstStalePending.getTime());
+                        this.getTransactionTime().getTime() - firstStalePending.asExactJavaDate().getTime());
                
             }else {
                 voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "pendingLag",

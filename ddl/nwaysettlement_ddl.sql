@@ -114,15 +114,17 @@ create procedure bl_transaction_status as select  'bl_transaction_status' statna
 ,  how_many  statvalue from transaction_status;
 
 CREATE STREAM transaction_failures 
+PARTITION ON COLUMN Transaction_id 
 EXPORT TO TOPIC transaction_failures_topic  
-(Transaction_id bigint
+(Transaction_id bigint not null
 ,Effective_date timestamp 
 ,tran_status varchar(10) 
 ,desc varchar(80));
 
 CREATE STREAM transaction_fixes
+PARTITION ON COLUMN Transaction_id 
 export to TOPIC transaction_fixes_topic
-(Transaction_id bigint
+(Transaction_id bigint not null
 ,Effective_date timestamp 
 ,tran_status varchar(10) 
 ,desc varchar(80));
