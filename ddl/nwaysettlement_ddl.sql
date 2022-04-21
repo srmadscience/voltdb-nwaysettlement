@@ -1,15 +1,15 @@
  
-DROP PROCEDURE CheckTransactionStatus IF EXISTS;
+DROP PROCEDURE CompoundPayment IF EXISTS;
 
 drop procedure bl_transaction_status if exists;
 
  DROP PROCEDURE GetStats__promBL IF EXISTS;
  
- DROP TASK EndTransactionsTask IF EXISTS;
+ DROP TASK EndOrphanedTransactionsTask IF EXISTS;
  
  DROP TASK TimeoutTransactionsTask IF EXISTS;
  
- DROP PROCEDURE EndTransactions IF EXISTS;
+ DROP PROCEDURE EndOrphanedTransactions IF EXISTS;
  
  DROP PROCEDURE TimeoutTransactions IF EXISTS;
  
@@ -17,9 +17,17 @@ drop procedure bl_transaction_status if exists;
  
  DROP PROCEDURE StartTransactionPayer IF EXISTS;
  
+ DROP PROCEDURE EndSpecificTransaction IF EXISTS;
+ 
+ DROP PROCEDURE SetTransactionEntryDone IF EXISTS;
+ 
+ DROP PROCEDURE SetPayerDone IF EXISTS;
+ 
  DROP STREAM transaction_failures IF EXISTS;
  
- DROP PROCEDURE GetBalance IF EXISTS;
+DROP STREAM transaction_fixes IF EXISTS;
+ 
+DROP PROCEDURE GetBalance IF EXISTS;
 
 drop view transaction_status if exists;
 
@@ -63,6 +71,7 @@ Create table user_transactions
 ,Effective_date timestamp not null
 ,stale_date timestamp not null
 ,tran_status varchar(20) not null
+,tran_status_explanation varchar(100) 
 ,queue_date timestamp
 ,insert_date TIMESTAMP DEFAULT NOW
 ,user_count bigint
@@ -71,6 +80,8 @@ Create table user_transactions
 
 CREATE INDEX ut_ix1 ON user_transactions (Transaction_id);
 
+
+CREATE INDEX ut_ix3 ON user_transactions (tran_status,insert_date);
 
 CREATE INDEX ut_ix4 ON user_transactions (tran_status,Effective_date);
 
@@ -103,12 +114,19 @@ create procedure bl_transaction_status as select  'bl_transaction_status' statna
 ,  how_many  statvalue from transaction_status;
 
 CREATE STREAM transaction_failures 
-export to target finevent
+EXPORT TO TOPIC transaction_failures_topic  
 (Transaction_id bigint
 ,Effective_date timestamp 
 ,tran_status varchar(10) 
-,user_count bigint
 ,desc varchar(80));
+
+CREATE STREAM transaction_fixes
+export to TOPIC transaction_fixes_topic
+(Transaction_id bigint
+,Effective_date timestamp 
+,tran_status varchar(10) 
+,desc varchar(80));
+
 
 
 load classes ../jars/nwayprocs.jar;
@@ -120,20 +138,32 @@ CREATE PROCEDURE
 CREATE PROCEDURE 
    PARTITION ON TABLE user_balances COLUMN userid
    FROM CLASS nwayprocedures.StartTransactionPayee; 
+
+CREATE PROCEDURE 
+   PARTITION ON TABLE user_balances COLUMN userid
+   FROM CLASS nwayprocedures.EndSpecificTransaction;
+   
+CREATE PROCEDURE 
+   PARTITION ON TABLE user_balances COLUMN userid
+   FROM CLASS nwayprocedures.SetTransactionEntryDone;
+   
+CREATE PROCEDURE 
+   PARTITION ON TABLE user_balances COLUMN userid
+   FROM CLASS nwayprocedures.SetPayerDone;
    
 CREATE PROCEDURE 
    PARTITION ON TABLE user_balances COLUMN userid
    FROM CLASS nwayprocedures.GetBalance; 
    
 CREATE PROCEDURE 
-   FROM CLASS nwayprocedures.EndTransactions;  
+   FROM CLASS nwayprocedures.EndOrphanedTransactions;  
    
-   drop task EndTransactionsTask if exists;
+drop task EndOrphanedTransactionsTask if exists;
    
-CREATE TASK EndTransactionsTask 
+CREATE TASK EndOrphanedTransactionsTask 
 ON SCHEDULE DELAY 5 MILLISECONDS
-PROCEDURE  EndTransactions
-WITH ('2000', '100') 
+PROCEDURE  EndOrphanedTransactions
+WITH ('100', '4000') 
 ON ERROR LOG RUN ON DATABASE ENABLE;   
 
 
@@ -149,10 +179,7 @@ select  'bl_transaction_status' statname
 ,  how_many  statvalue from transaction_status;
 END;
 
-CREATE PROCEDURE  
-PARTITION ON TABLE user_transactions COLUMN userid 
- FROM CLASS nwayprocedures.CheckTransactionStatus; 
    
-
+CREATE  PROCEDURE  FROM CLASS nwayprocedures.CompoundPayment;
 
 

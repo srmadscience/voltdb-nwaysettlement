@@ -48,7 +48,7 @@ public class StartTransactionPayee extends VoltProcedure {
 		final Date cutoffDate = new Date(this.getTransactionTime().getTime() - StartTransactionPayer.GRACE_MS);
 		
 		if (effectiveDate.asExactJavaDate().before(cutoffDate)) {
-			this.setAppStatusCode(StartTransactionPayer.MISSED_EFFECTIVE_DATE);
+			this.setAppStatusCode(StartTransactionPayer.MISSED_EFFECTIVE_DATE_CODE);
 			this.setAppStatusString(StartTransactionPayer.MISSED_EFFECTIVE_DATE_MESSAGE);
 			return voltExecuteSQL(true);
 		}
@@ -58,14 +58,14 @@ public class StartTransactionPayee extends VoltProcedure {
 		VoltTable[] userQueryResults = voltExecuteSQL();
 
 		if (!userQueryResults[0].advanceRow()) {
-			this.setAppStatusCode(StartTransactionPayer.NO_SUCH_USER);
+			this.setAppStatusCode(StartTransactionPayer.NO_SUCH_USER_CODE);
 			this.setAppStatusString(StartTransactionPayer.NO_SUCH_USER_MESSAGE);
 			return voltExecuteSQL(true);
 		}
 
 		this.voltQueueSQL(startTransaction, paidUserId, payingUserId, paidAmount, txnId, effectiveDate, effectiveDate);
-		this.setAppStatusCode(StartTransactionPayer.QUEUED);
-		this.setAppStatusString(StartTransactionPayer.QUEUED_MESSAGE);
+		this.setAppStatusCode(StartTransactionPayer.PENDING_CODE);
+		this.setAppStatusString(StartTransactionPayer.PENDING_MESSAGE);
 
 		
 		return voltExecuteSQL(true);
