@@ -35,6 +35,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
     public static final String STC_PAYERDONE = "STC_PAYERDONE";
     public static final String STC_ALLDONE = "STC_ALLDONE";
     public static final String STC_FINISH = "STC_FINISH";
+    private static final int MAX_PARAMETERS = 10;
 
     static VoltLogger LOG = new VoltLogger("CompoundPayment");
 
@@ -59,6 +60,13 @@ public class CompoundPayment extends VoltCompoundProcedure {
             LOG.error(StartTransactionPayer.PAYEE_LIST_MISMATCH_MESSAGE);
             this.setAppStatusCode(StartTransactionPayer.PAYEE_LIST_MISMATCH_CODE);
             this.setAppStatusString(StartTransactionPayer.PAYEE_LIST_MISMATCH_MESSAGE);
+            return 0l;
+        }
+
+        if (amounts.length > MAX_PARAMETERS - 1) {
+            LOG.error(StartTransactionPayer.PAYEE_LIST_TOOLONG_MESSAGE);
+            this.setAppStatusCode(StartTransactionPayer.PAYEE_LIST_TOOLONG_CODE);
+            this.setAppStatusString(StartTransactionPayer.PAYEE_LIST_TOOLONG_MESSAGE);
             return 0l;
         }
 
