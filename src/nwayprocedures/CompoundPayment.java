@@ -42,7 +42,6 @@ public class CompoundPayment extends VoltCompoundProcedure {
     long payerId, txnId, delay;
     long[] payeeId, amounts;
     Date effectiveDate;
-    boolean errorsReported;
 
     public long run(long payerId, long txnId, long[] payeeId, long[] amounts, Date effectiveDate) {
 
@@ -140,6 +139,29 @@ public class CompoundPayment extends VoltCompoundProcedure {
 
     }
 
+ 
+    private void reportError(String status, String statusExplanation) {
+        newStageList(this::completeWithErrors).build();
+        this.setAppStatusString(status);
+        queueProcedureCall("EndSpecificTransaction", txnId, status, statusExplanation);
+    }
+    
+    // Complete the procedure after reporting errors: check if we succeeded logging
+    // them
+    private void completeWithErrors(ClientResponse[] resp) {
+        for (ClientResponse r : resp) {
+            if (r.getStatus() != ClientResponse.SUCCESS) {
+                final String errorMessage = String.format("Failed to completeWithErrors: %s", r.getStatusString());
+                this.setAppStatusString(errorMessage);
+                LOG.error(errorMessage);
+                abortProcedure(errorMessage);
+            }
+        }
+
+        completeProcedure(-1L);
+    }
+
+    
     private StringBuffer checkForErrors(ClientResponse[] resp, byte okCode, int expectedResponses) {
 
         StringBuffer errorList = new StringBuffer();
@@ -170,32 +192,5 @@ public class CompoundPayment extends VoltCompoundProcedure {
             LOG.error(errorList.toString());
         }
         return errorList;
-    }
-
-    // Complete the procedure after reporting errors: check if we succeeded logging
-    // them
-    private void completeWithErrors(ClientResponse[] resp) {
-        for (ClientResponse r : resp) {
-            if (r.getStatus() != ClientResponse.SUCCESS) {
-                this.setAppStatusString(String.format("Failed reporting errors: %s", r.getStatusString()));
-                abortProcedure(String.format("Failed reporting errors: %s", r.getStatusString()));
-            }
-        }
-
-        completeProcedure(-1L);
-    }
-
-    // Report execution errors to special topic. We:
-    // 1. Change the stage list so as to abandon all incomplete stages
-    // and set up a new final stage
-    // 2. Queue up a request, to be executed after the
-    // current stage, to update the special topic
-    private void reportError(String status, String statusExplanation) {
-        if (!errorsReported) {
-            newStageList(this::completeWithErrors).build();
-            errorsReported = true;
-        }
-        this.setAppStatusString(status);
-        queueProcedureCall("EndSpecificTransaction", txnId, status, statusExplanation);
     }
 }
