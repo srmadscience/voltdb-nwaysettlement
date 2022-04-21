@@ -11,9 +11,6 @@ In a traditional RDBMS we'd have a user_balances table with 3 rows, each consist
 
 ## How we solve it ##
 
-![NWay](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/docs/nway.png "NWay")
-
-
 Instead of having a single table per user we have two. One is a Balance table, and the other is a Transaction Table. Your *actual* Balance is the amount in the Balance table plus any transactions that are marked as DONE. Transactions can be PENDING (new), FAILED or DONE. The transaction table also has an extra column called USER_COUNT. the person paying sets USER_COUNT to how many people are involved. "Effective_Date" is set to a value several milliseconds in the future. The client application creates a row in the Transaction Table for each person involved:
 
 USER | TransactionId | Status | Amount | User_Count | Effective_Date
@@ -22,9 +19,16 @@ ALICE | 1 | PENDING | -103 | 3 | calltime +3ms
 BIGCORP | 1 | PENDING | 100 | NULL| calltime +3ms
 WESHIP | 1 | PENDING | 3 | NULL| calltime +3ms
 
-The client program fires off async requests to VoltDB and waits for responses.  Note the Effective_Date column - we allow time for all the rows to show up. The actual offset depends on you situation.  The sync requests don't just blindly insert pending rows. They do sanity checking, such as whether ALICE does actually have 103 Euros to spend, and whether BIGCORP and WESHIP are real users that can accept payments. If the incoming request for a user doesn't make sense the procedure won't create a transaction record.
+The client program calls a Compound Procedure that in turn fires off async requests to the partitions that own each account and waits for responses.  Note the Effective_Date column - we allow time for all the rows to show up. The actual offset depends on you situation.  The  requests don't just blindly insert pending rows. They do sanity checking, such as whether ALICE does actually have 103 Euros to spend, and whether BIGCORP and WESHIP are real users that can accept payments. If the incoming request for a user doesn't make sense the procedure won't create a transaction record.
 
 When the client program gets responses from all 3 requests it checks to see if they all claim to have worked. If not, we now know we have a problem and can maybe try later with a different transaction_id.
+
+![NWay](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/docs/nway.png "NWay")
+
+
+
+
+
 
 By now 3ms have passed, and a scheduled task running every 0.3ms on the server has woken up. It does several things:
 
