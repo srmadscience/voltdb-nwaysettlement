@@ -11,6 +11,9 @@ In a traditional RDBMS we'd have a user_balances table with 3 rows, each consist
 
 ## How we solve it ##
 
+![NWay](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/docs/nway.png "NWay")
+
+
 Instead of having a single table per user we have two. One is a Balance table, and the other is a Transaction Table. Your *actual* Balance is the amount in the Balance table plus any transactions that are marked as DONE. Transactions can be PENDING (new), FAILED or DONE. The transaction table also has an extra column called USER_COUNT. the person paying sets USER_COUNT to how many people are involved. "Effective_Date" is set to a value several milliseconds in the future. The client application creates a row in the Transaction Table for each person involved:
 
 USER | TransactionId | Status | Amount | User_Count | Effective_Date
