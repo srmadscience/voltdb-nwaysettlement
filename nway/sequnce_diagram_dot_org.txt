@@ -1,0 +1,25 @@
+title Alice Needs to pay BigCorp and WeShip
+
+Alice->Volt: Send $2 to BigCorp \nand $1 to WeShip
+
+Volt->(1)Alice's account:Reduce by $3
+Volt->(1)BigCorp's Account:Increase by $2
+Volt->(1)WeShip's Account:Increase by $1
+
+Alice's account->(1)Volt:Reduced by $3
+BigCorp's Account->(1)Volt:Increased by $2
+WeShip's Account->(1)Volt:Increased by $1
+
+note over Alice,WeShip's Account: The next call marks the transaction complete in Alice's account \nAny failures will be cleaned up by a background task.
+
+Volt->(1)Alice's account:Mark Transaction\nFinished
+Alice's account->(1)Volt:Transaction\nFinished
+
+note over Alice,WeShip's Account:Once the above call finishes the transaction is **finished** and will be completed by a background task if needed
+
+Volt->(1)BigCorp's Account:Mark Transaction\nFinished
+BigCorp's Account->(1)Volt:Transaction\nFinished
+Volt->(1)WeShip's Account:Mark Transaction\nFinished
+WeShip's Account->(1)Volt:Transaction\nFinished
+
+Volt->Alice: Transaction Done!
