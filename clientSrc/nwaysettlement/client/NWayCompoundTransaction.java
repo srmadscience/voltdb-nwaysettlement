@@ -101,7 +101,7 @@ public class NWayCompoundTransaction implements ProcedureCallback {
         if (response.getStatus() != ClientResponse.SUCCESS) {
             isValid = false;
             statsCache.reportLatency("ERROR_" + response.getStatusString(), startDate.getTime(), "", HISTOGRAM_SIZE_MS);
-        } else if (!response.getAppStatusString().equals(CompoundPayment.STC_FINISH)) {
+        } else if (!response.getAppStatusString().equals(StartTransactionPayer.DONE_MESSAGE)) {
             msg(response.getAppStatusString());
             isValid = false;
             statsCache.reportLatency("ERROR_" + response.getAppStatusString(), startDate.getTime(), "",

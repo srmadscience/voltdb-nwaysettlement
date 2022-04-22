@@ -17,7 +17,7 @@ drop procedure bl_transaction_status if exists;
  
  DROP PROCEDURE StartTransactionPayer IF EXISTS;
  
- DROP PROCEDURE EndSpecificTransaction IF EXISTS;
+ DROP PROCEDURE EndSpecificTransactionWithErrors IF EXISTS;
  
  DROP PROCEDURE SetTransactionEntryDone IF EXISTS;
  
@@ -71,7 +71,7 @@ Create table user_transactions
 ,Effective_date timestamp not null
 ,stale_date timestamp not null
 ,tran_status varchar(20) not null
-,tran_status_explanation varchar(100) 
+,tran_status_explanation varchar(1000) 
 ,queue_date timestamp
 ,insert_date TIMESTAMP DEFAULT NOW
 ,user_count bigint
@@ -119,7 +119,7 @@ EXPORT TO TOPIC transaction_failures_topic
 (Transaction_id bigint not null
 ,Effective_date timestamp 
 ,tran_status varchar(10) 
-,desc varchar(80));
+,desc varchar(1000));
 
 CREATE STREAM transaction_fixes
 PARTITION ON COLUMN Transaction_id 
@@ -127,7 +127,7 @@ export to TOPIC transaction_fixes_topic
 (Transaction_id bigint not null
 ,Effective_date timestamp 
 ,tran_status varchar(10) 
-,desc varchar(80));
+,desc varchar(1000));
 
 
 
@@ -143,7 +143,7 @@ CREATE PROCEDURE
 
 CREATE PROCEDURE 
    PARTITION ON TABLE user_balances COLUMN userid
-   FROM CLASS nwayprocedures.EndSpecificTransaction;
+   FROM CLASS nwayprocedures.EndSpecificTransactionWithErrors;
    
 CREATE PROCEDURE 
    PARTITION ON TABLE user_balances COLUMN userid

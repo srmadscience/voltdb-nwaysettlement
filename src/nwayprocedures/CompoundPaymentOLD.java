@@ -22,15 +22,19 @@
  */
 package nwayprocedures;
 
-import java.util.Arrays;
 import java.util.Date;
 
 import org.voltcore.logging.VoltLogger;
 import org.voltdb.VoltCompoundProcedure;
 import org.voltdb.client.ClientResponse;
 
-public class CompoundPayment extends VoltCompoundProcedure {
+public class CompoundPaymentOLD extends VoltCompoundProcedure {
 
+    public static final String STC_START = "STC_START";
+    public static final String STC_LAUNCH = "STC_LAUNCH";
+    public static final String STC_PAYERDONE = "STC_PAYERDONE";
+    public static final String STC_ALLDONE = "STC_ALLDONE";
+    public static final String STC_FINISH = "STC_FINISH";
     private static final int MAX_PARAMETERS = 10;
 
     static VoltLogger LOG = new VoltLogger("CompoundPayment");
@@ -38,15 +42,14 @@ public class CompoundPayment extends VoltCompoundProcedure {
     long payerId, txnId, delay;
     long[] payeeId, amounts;
     Date effectiveDate;
-    StringBuffer errorList = new  StringBuffer();
-    
-    String returnAppStatus = StartTransactionPayer.DONE_MESSAGE;
-    byte statusByte = StartTransactionPayer.DONE_CODE;
 
     public long run(long payerId, long txnId, long[] payeeId, long[] amounts, Date effectiveDate) {
 
+        this.setAppStatusString(STC_START);
+
         // Save inputs
         this.payerId = payerId;
+
         this.txnId = txnId;
         this.payeeId = payeeId;
         this.amounts = amounts;
@@ -67,16 +70,14 @@ public class CompoundPayment extends VoltCompoundProcedure {
         }
 
         // Build stages
-        newStageList(this::launchTransactions).then(this::markPayerDone)
-        .then(this::finishPayees).then(this::optionallyReportErrors).then(this::finish)
+        newStageList(this::launchTransactions).then(this::markPayerDone).then(this::finishPayees).then(this::finish)
                 .build();
         return 0L;
     }
 
-    /**
-     * Launch payer and payee Tx's. These might fail for business reasons, e.g. no money
-     */
     private void launchTransactions(ClientResponse[] unused) {
+
+        this.setAppStatusString(STC_LAUNCH);
 
         long payerAmount = 0;
 
@@ -89,83 +90,82 @@ public class CompoundPayment extends VoltCompoundProcedure {
 
     }
 
-    
-    /**
-     * If all of the payer/payee things worked set the payers status to PAYERDONE, which means tx is
-     * going to finish come hell or high water...
-     */
+    // Process results of first stage, i.e. lookups, and perform updates
     private void markPayerDone(ClientResponse[] resp) {
 
-        if (hasNoErrors(resp, StartTransactionPayer.PENDING_CODE, payeeId.length + 1,StartTransactionPayer.CANTSTART)) {
+        this.setAppStatusString(STC_PAYERDONE);
+
+        StringBuffer errorList = checkForErrors(resp, StartTransactionPayer.PENDING_CODE, payeeId.length + 1);
+
+        if (errorList.length() == 0) {
             queueProcedureCall("SetPayerDone", payerId, txnId, StartTransactionPayer.PAYERDONE_MESSAGE);
-        } 
+
+        } else {
+            reportError(StartTransactionPayer.CANTSTART, "Unable to finishPayer: " + errorList.toString());
+        }
 
     }
 
-    /**
-     * If we have set the payer to PAYERDONE set everyone to DONE. Note that even if we stop executing
-     * at this point a task will do this for us if we don't.
-     */
     private void finishPayees(ClientResponse[] resp) {
 
-        if (hasNoErrors(resp, StartTransactionPayer.PAYERDONE_CODE, 1,StartTransactionPayer.CANTSTART)) {
-            
+        this.setAppStatusString(STC_ALLDONE);
+
+        StringBuffer errorList = checkForErrors(resp, StartTransactionPayer.PAYERDONE_CODE, 1);
+
+        if (errorList.length() == 0) {
             for (int i = 0; i < amounts.length; i++) {
                 queueProcedureCall("SetTransactionEntryDone", payeeId[i], txnId);
             }
 
             queueProcedureCall("SetTransactionEntryDone", payerId, txnId);
 
-        } 
-
-    }
-    
-    /**
-     * If we've broken things - e.g. someone didn't have the $, try to clean up. Note that a task 
-     * will do this even if we don't.
-     */
-    private void optionallyReportErrors(ClientResponse[] resp) {
-        
-        // There is no point in checking 'resp'. We've already decided things are bad...
-        
-        if (hasErrors() ) {
-            queueProcedureCall("EndSpecificTransactionWithErrors", txnId, returnAppStatus, errorList.toString());
+        } else {
+            reportError(StartTransactionPayer.CANTSTART, "Unable to finishPayees: " + errorList.toString());
         }
-        
+
     }
 
-    /**
-     * Ignore resp - not much we can do now. Set return codes and exit.
-     */
     private void finish(ClientResponse[] resp) {
-        
-        this.setAppStatusString(returnAppStatus);
-        
-        if (hasErrors()) {
-            this.setAppStatusCode(statusByte);
-            completeProcedure(-1L);            
-        }
-            this.setAppStatusCode(StartTransactionPayer.DONE_CODE);
+
+        this.setAppStatusString(STC_FINISH);
+
+        StringBuffer errorList = checkForErrors(resp, StartTransactionPayer.DONE_CODE, payeeId.length + 1);
+
+        if (errorList.length() == 0) {
             completeProcedure(0L);
-        
-        
+        } else {
+            reportError(StartTransactionPayer.CANTFINISH, "Unable to Finish Tx:" + errorList.toString());
+        }
+
     }
 
  
-    private boolean hasErrors() {
-        if (errorList.length() > 0) {
-            return true;
-        }
-        
-        return false;
+    private void reportError(String status, String statusExplanation) {
+        newStageList(this::completeWithErrors).build();
+        this.setAppStatusString(status);https://github.com/ssomagani/field-jobs
+        queueProcedureCall("EndSpecificTransaction", txnId, status, statusExplanation);
     }
     
-    private boolean hasNoErrors(ClientResponse[] resp, byte okCode, int expectedResponses, String errorStatus) {
-        
-        if (errorList.length() > 0) {
-            return false;
+    // Complete the procedure after reporting errors: check if we succeeded logging
+    // them
+    private void completeWithErrors(ClientResponse[] resp) {
+        for (ClientResponse r : resp) {
+            if (r.getStatus() != ClientResponse.SUCCESS) {
+                final String errorMessage = String.format("Failed to completeWithErrors: %s", r.getStatusString());
+                this.setAppStatusString(errorMessage);
+                LOG.error(errorMessage);
+                abortProcedure(errorMessage);
+            }
         }
-        
+
+        completeProcedure(-1L);
+    }
+
+    
+    private StringBuffer checkForErrors(ClientResponse[] resp, byte okCode, int expectedResponses) {
+
+        StringBuffer errorList = new StringBuffer();
+
         if (resp.length != expectedResponses) {
             errorList.append("Quantity Error: got " + resp.length + ", expected " + expectedResponses);
         }
@@ -173,14 +173,13 @@ public class CompoundPayment extends VoltCompoundProcedure {
         for (int i = 0; i < resp.length; i++) {
 
             if (resp[i].getStatus() != ClientResponse.SUCCESS) {
-                statusByte = resp[i].getStatus();
+                this.setAppStatusCode(resp[i].getStatus());
                 errorList.append("DB Error ");
                 errorList.append(i);
                 errorList.append(' ');
                 errorList.append(resp[i].getStatusString());
                 errorList.append(':');
             } else if (resp[i].getAppStatus() != okCode) {
-                statusByte = resp[i].getAppStatus();
                 errorList.append("App Error ");
                 errorList.append(i);
                 errorList.append(' ');
@@ -190,37 +189,8 @@ public class CompoundPayment extends VoltCompoundProcedure {
         }
 
         if (errorList.length() > 0) {
-            returnAppStatus = errorStatus;
             LOG.error(errorList.toString());
-            return false;
         }
-        
-        return true;
-       
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("CompoundPayment [payerId=");
-        builder.append(payerId);
-        builder.append(", txnId=");
-        builder.append(txnId);
-        builder.append(", delay=");
-        builder.append(delay);
-        builder.append(", payeeId=");
-        builder.append(Arrays.toString(payeeId));
-        builder.append(", amounts=");
-        builder.append(Arrays.toString(amounts));
-        builder.append(", effectiveDate=");
-        builder.append(effectiveDate);
-        builder.append(", errorList=");
-        builder.append(errorList);
-        builder.append(", returnAppStatus=");
-        builder.append(returnAppStatus);
-        builder.append(", statusByte=");
-        builder.append(statusByte);
-        builder.append("]");
-        return builder.toString();
+        return errorList;
     }
 }

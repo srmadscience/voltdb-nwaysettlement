@@ -29,14 +29,20 @@ import org.voltdb.VoltTable;
 /**
  * End all transactions where we have reached the effective date.
  */
-public class EndSpecificTransaction extends VoltProcedure {
+public class EndSpecificTransactionWithErrors extends VoltProcedure {
 
     public static final SQLStmt finishTransaction = new SQLStmt(
             "UPDATE user_transactions SET tran_status = ?, tran_status_explanation = ?, done_date = NOW, queue_date = null, user_count = null WHERE Transaction_id = ? ;");
+    
+    public static final SQLStmt reportFailures = new SQLStmt(
+            "INSERT INTO transaction_failures(Transaction_id,Effective_date,tran_status,desc) VALUES (?,NOW,?,?);");
+
 
     public VoltTable[] run(long txnId, String status, String tranStatusExplanation) throws VoltAbortException {
 
         voltQueueSQL(finishTransaction, status, tranStatusExplanation, txnId);
+        voltQueueSQL(reportFailures, txnId, tranStatusExplanation, tranStatusExplanation);
+        
         return voltExecuteSQL(true);
 
     }
