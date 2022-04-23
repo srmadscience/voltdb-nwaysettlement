@@ -74,6 +74,9 @@ public class StartTransactionPayer extends VoltProcedure {
     public static final byte PAYEE_LIST_TOOLONG_CODE = 7;
     public static final String PAYEE_LIST_TOOLONG_MESSAGE = "Payee list must be 9 or less in length";
 
+    public static final byte PARAMETER_NULL_CODE = 8;
+    public static final String PARAMETER_NULL_MESSAGE = "Parameter can not be null";
+
     public static final String CANTFINISH = "CANTFINISH";
     public static final String CANTSTART = "CANTSTART";
     public static final String STALE = "STALE";

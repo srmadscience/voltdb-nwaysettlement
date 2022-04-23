@@ -206,8 +206,8 @@ public class StatsHistogram {
 
         double runningTotal = 0.0;
 
-        for (int i = 0; i < latencyHistogram.length; i++) {
-            runningTotal += latencyHistogram[i];
+        for (double element : latencyHistogram) {
+            runningTotal += element;
         }
 
         return runningTotal;

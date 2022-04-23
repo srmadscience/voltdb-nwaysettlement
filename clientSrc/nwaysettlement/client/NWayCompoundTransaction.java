@@ -28,14 +28,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.voltdb.client.Client;
 import org.voltdb.client.ClientResponse;
 import org.voltdb.client.ProcedureCallback;
 import org.voltdb.voltutil.stats.SafeHistogramCache;
 
-import nwayprocedures.CompoundPayment;
 import nwayprocedures.StartTransactionPayer;
 
 public class NWayCompoundTransaction implements ProcedureCallback {
@@ -48,7 +46,7 @@ public class NWayCompoundTransaction implements ProcedureCallback {
     Date startCheckDate;
     boolean isValid = true;
     SafeHistogramCache statsCache = SafeHistogramCache.getInstance();
-    HashMap<Long, Long> payeeList = new HashMap<Long, Long>();
+    HashMap<Long, Long> payeeList = new HashMap<>();
 
     public NWayCompoundTransaction(long payerId, long txnId, long delay) {
         super();

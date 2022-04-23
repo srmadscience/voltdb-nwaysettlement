@@ -28,7 +28,7 @@ import org.voltdb.client.ProcedureCallback;
 
 /**
  * Simple callback that complains if something went badly wrong.
- * 
+ *
  * @author drolfe
  *
  */

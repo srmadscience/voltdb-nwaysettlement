@@ -25,7 +25,6 @@ package nwayprocedures;
 import java.util.Date;
 import java.util.Random;
 
-import org.HdrHistogram_voltpatches.AbstractHistogram;
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
@@ -201,9 +200,9 @@ public class EndOrphanedTransactions extends VoltProcedure {
             String[] statsToBeSetToZero = { "skippedPayerDoneCount", "forceFinishedTxs", "forceFinishedTxMembers",
                     "payerDoneLag", "skippedDoneCount", "staleTxs", "staleTxMembers", "pendingLag" };
 
-            for (int i = 0; i < statsToBeSetToZero.length; i++) {
+            for (String element : statsToBeSetToZero) {
                 voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement",
-                        statsToBeSetToZero[i], 0);
+                        element, 0);
             }
         }
 

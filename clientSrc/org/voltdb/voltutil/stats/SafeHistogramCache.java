@@ -29,9 +29,9 @@ public class SafeHistogramCache {
 
     private static SafeHistogramCache instance = null;
 
-    HashMap<String, StatsHistogram> theHistogramMap = new HashMap<String, StatsHistogram>();
-    HashMap<String, Long> theCounterMap = new HashMap<String, Long>();
-    HashMap<String, SizeHistogram> theSizeHistogramMap = new HashMap<String, SizeHistogram>();
+    HashMap<String, StatsHistogram> theHistogramMap = new HashMap<>();
+    HashMap<String, Long> theCounterMap = new HashMap<>();
+    HashMap<String, SizeHistogram> theSizeHistogramMap = new HashMap<>();
 
     final int DEFAULT_SIZE = 100;
 
@@ -52,9 +52,9 @@ public class SafeHistogramCache {
         synchronized (theHistogramMap) {
             synchronized (theCounterMap) {
                 synchronized (theSizeHistogramMap) {
-                    theHistogramMap = new HashMap<String, StatsHistogram>();
-                    theCounterMap = new HashMap<String, Long>();
-                    theSizeHistogramMap = new HashMap<String, SizeHistogram>();
+                    theHistogramMap = new HashMap<>();
+                    theCounterMap = new HashMap<>();
+                    theSizeHistogramMap = new HashMap<>();
 
                 }
             }
@@ -218,15 +218,7 @@ public class SafeHistogramCache {
             synchronized (theCounterMap) {
                 synchronized (theSizeHistogramMap) {
 
-                    if (!theHistogramMap.isEmpty()) {
-                        return true;
-                    }
-
-                    if (!theCounterMap.isEmpty()) {
-                        return true;
-                    }
-
-                    if (!theSizeHistogramMap.isEmpty()) {
+                    if (!theHistogramMap.isEmpty() || !theCounterMap.isEmpty() || !theSizeHistogramMap.isEmpty()) {
                         return true;
                     }
 

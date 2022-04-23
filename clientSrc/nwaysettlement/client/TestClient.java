@@ -249,7 +249,7 @@ public class TestClient {
 
     }
 
-    private static Client connectVoltDB(String commaDelimitedHostnames) throws Exception {
+    public static Client connectVoltDB(String commaDelimitedHostnames) throws Exception {
         Client client = null;
         ClientConfig config = null;
 
