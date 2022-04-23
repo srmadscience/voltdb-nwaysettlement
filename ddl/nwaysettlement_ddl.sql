@@ -32,6 +32,7 @@ DROP PROCEDURE GetBalance IF EXISTS;
 drop view transaction_status if exists;
 
 DROP VIEW vw_users_per_pending_transactions IF EXISTS;
+DROP view transasction_net_changes IF EXISTS;
    
  DROP TABLE user_balances IF EXISTS;
  
@@ -107,6 +108,13 @@ max(Effective_date) max_effective_date,
 count (*) how_many 
 from user_transactions group by tran_status;
 
+create view transasction_net_changes as
+select Transaction_id, sum(tran_amount) tran_amount, count(*) how_many
+from user_transactions
+where tran_status = 'DONE'
+group by Transaction_id;
+
+create index transasction_net_changes_idx1 on transasction_net_changes(tran_amount);
 
 create procedure bl_transaction_status as select  'bl_transaction_status' statname
 , 'a help message' stathelp 
