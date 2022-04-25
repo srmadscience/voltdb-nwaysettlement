@@ -32,8 +32,11 @@ import org.voltdb.VoltTable;
 public class SetTransactionEntryDone extends VoltProcedure {
 
     public static final SQLStmt finishTransaction = new SQLStmt(
-            "UPDATE user_transactions SET tran_status = 'DONE', done_date = NOW, queue_date = null, user_count = null "
-                    + "WHERE  userid = ? AND Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
+            "UPDATE user_transactions "
+            + "SET tran_status = 'DONE', done_date = NOW, queue_date = null, user_count = null "
+                    + "WHERE  userid = ? AND Transaction_id = ? "
+                    + "AND tran_status IN ('PENDING','PAYERDONE') "
+                    + "AND DATEADD(MILLISECOND,3,insert_date) <= NOW;");
 
     public VoltTable[] run(long userId, long txnId) throws VoltAbortException {
         // Find oldest pending record...

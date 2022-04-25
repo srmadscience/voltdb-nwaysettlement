@@ -173,7 +173,7 @@ drop task EndOrphanedTransactionsTask if exists;
 CREATE TASK EndOrphanedTransactionsTask 
 ON SCHEDULE DELAY 5 MILLISECONDS
 PROCEDURE  EndOrphanedTransactions
-WITH ('100', '4000') 
+WITH ('100', '60000') 
 ON ERROR LOG RUN ON DATABASE ENABLE;   
 
 

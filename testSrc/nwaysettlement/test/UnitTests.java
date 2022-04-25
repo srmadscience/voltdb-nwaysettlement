@@ -57,6 +57,7 @@ class UnitTests {
         Date effectiveDate = new Date();
 
         try {
+            @SuppressWarnings("unused")
             ClientResponse cr = c.callProcedure("CompoundPayment", payerId, txnId, payeeId, amounts, effectiveDate);
             fail("should not get here");
         } catch (IOException e) {
@@ -79,6 +80,7 @@ class UnitTests {
         Date effectiveDate = new Date();
 
         try {
+            @SuppressWarnings("unused")
             ClientResponse cr = c.callProcedure("CompoundPayment", payerId, txnId, payeeId, amounts, effectiveDate);
             fail("should not get here");
         } catch (IOException e) {
@@ -183,6 +185,8 @@ class UnitTests {
         }
 
     }
+    
+   
 
     @Test
     void missingPayee() {
@@ -254,6 +258,7 @@ class UnitTests {
         Date effectiveDate = new Date();
 
         try {
+            @SuppressWarnings("unused")
             ClientResponse cr = c.callProcedure("CompoundPayment", payerId, txnId, payeeId, amounts, effectiveDate);
             fail("should not get here");
         } catch (IOException e) {
