@@ -19,9 +19,15 @@ ALICE | 1 | PENDING | -3 |  calltime +3ms
 BIGCORP | 1 | PENDING | 2 |  calltime +3ms
  WESHIP | 1 | PENDING | 1 |  calltime +3ms
 
-The client program calls a Compound Procedure that in turn fires off async requests to the partitions that own each account and waits for responses.  Note the Effective_Date column - we allow time for all the rows to show up. The actual offset depends on you situation.  The  requests don't just blindly insert pending rows. They do sanity checking, such as whether ALICE does actually have 103 Euros to spend, and whether BIGCORP and WESHIP are real users that can accept payments. If the incoming request for a user doesn't make sense the procedure won't create a transaction record.
+The client program calls a Compound Procedure that in turn fires off async requests to the partitions that own each account and waits for responses.  Note the Effective_Date column - we allow time for all the rows to show up. The actual offset depends on your situation.  The  requests don't just blindly insert pending rows. They do sanity checking, such as whether ALICE does actually have 3 Euros to spend, and whether BIGCORP and WESHIP are real users that can accept payments. If the incoming request for a user doesn't make sense the procedure won't create a transaction record.
 
-When the client program gets responses from all 3 requests it checks to see if they all claim to have worked. If not, we now know we have a problem and can maybe try later with a different transaction_id.
+When the compound proc gets responses from all 3 requests it checks to see if they all claim to have worked and have a status of PENDING.
+
+If not, the proc deletes the rows and returns control to the client, along with an error message. Normally records are pending for < 3ms.
+
+If we are still good, a special step takes place - the compound proc calls another proc to update Alice's transaction to a status of PAYERDONE. This is a single call to a single partition procedure. Once this is done we are finished for practical purposes - even if the last step, in which we update the other records to DONE never happens, we have a scheduled tasks that will do it.
+
+Note that the scheduled task is a multi partition transaction, which means it's sees everything at the same time. Normally it has nothing to do, so it doesn't impact performance.
 
 ![NWay](https://github.com/srmadscience/voltdb-nwaysettlement/blob/main/docs/nway.png "NWay")
 
