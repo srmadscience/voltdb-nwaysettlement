@@ -104,7 +104,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
         if (hasNoErrors(resp, StartTransactionPayer.PENDING_CODE, payeeId.length + 1,
                 StartTransactionPayer.CANTSTART)) {
             queueProcedureCall("SetPayerDone", payerId, txnId, StartTransactionPayer.PAYERDONE_MESSAGE);
-        }
+        } 
 
     }
 
@@ -135,7 +135,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
    
         if (! hasNoErrors(resp, StartTransactionPayer.DONE_CODE, payeeId.length + 1,
                 StartTransactionPayer.CANTFINISH)) {
-            queueProcedureCall("EndSpecificTransactionWithErrors", txnId, returnAppStatus, errorList.toString());
+            queueProcedureCall("EndSpecificTransactionWithErrors", txnId, returnAppStatus, this.toString());
         }
 
     }

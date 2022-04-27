@@ -40,7 +40,7 @@ public class EndSpecificTransactionWithErrors extends VoltProcedure {
     public VoltTable[] run(long txnId, String status, String tranStatusExplanation) throws VoltAbortException {
 
         voltQueueSQL(finishTransaction, status, tranStatusExplanation, txnId);
-        voltQueueSQL(reportFailures, txnId, tranStatusExplanation, tranStatusExplanation);
+        voltQueueSQL(reportFailures, txnId, status, tranStatusExplanation);
 
         return voltExecuteSQL(true);
 

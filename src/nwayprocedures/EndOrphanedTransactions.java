@@ -166,7 +166,7 @@ public class EndOrphanedTransactions extends VoltProcedure {
 
                 voltQueueSQL(cancelTransaction, staleRecords.getLong("userid"), staleRecords.getLong("Transaction_id"));
                 voltQueueSQL(reportFailures, staleRecords.getLong("Transaction_id"), this.getTransactionTime(),
-                        StartTransactionPayer.STALE, "PENDING, Cancelled by EndOrphanedTransactions");
+                        StartTransactionPayer.STALE, "PENDING, Cancelled by EndOrphanedTransactions. Started at " + insertDate.toString());
 
             }
 
