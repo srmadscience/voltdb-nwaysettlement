@@ -7,7 +7,7 @@ drop procedure bl_transaction_status if exists;
  
  DROP TASK EndOrphanedTransactionsTask IF EXISTS;
  
- DROP TASK TimeoutTransactionsTask IF EXISTS;
+
  
  DROP PROCEDURE EndOrphanedTransactions IF EXISTS;
  
@@ -193,3 +193,4 @@ END;
 CREATE  PROCEDURE  FROM CLASS nwayprocedures.CompoundPayment;
 
 
+ DROP TASK EndOrphanedTransactionsTask IF EXISTS;

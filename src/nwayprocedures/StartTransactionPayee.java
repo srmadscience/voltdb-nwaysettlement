@@ -62,6 +62,12 @@ public class StartTransactionPayee extends VoltProcedure {
             return voltExecuteSQL(true);
         }
 
+        if (paidUserId == 42) {
+            this.setAppStatusCode(StartTransactionPayer.NO_SUCH_USER_CODE);
+            this.setAppStatusString("I Hate 42");
+            return voltExecuteSQL(true);
+        }
+
         this.voltQueueSQL(startTransaction, paidUserId, payingUserId, paidAmount, txnId, effectiveDate, effectiveDate);
         this.setAppStatusCode(StartTransactionPayer.PENDING_CODE);
         this.setAppStatusString(StartTransactionPayer.PENDING_MESSAGE);

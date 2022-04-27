@@ -41,7 +41,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
     StringBuffer errorList = new StringBuffer();
 
     String returnAppStatus = StartTransactionPayer.DONE_MESSAGE;
-    byte statusByte = StartTransactionPayer.DONE_CODE;
+    byte returnStatusByte = StartTransactionPayer.DONE_CODE;
 
     public long run(long payerId, long txnId, long[] payeeId, long[] amounts, Date effectiveDate) {
 
@@ -52,7 +52,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
         this.amounts = amounts;
         this.effectiveDate = effectiveDate;
 
-        if (amounts == null || payeeId == null) {
+        if (amounts == null || payeeId == null || effectiveDate == null) {
             LOG.error(StartTransactionPayer.PARAMETER_NULL_CODE);
             this.setAppStatusCode(StartTransactionPayer.PARAMETER_NULL_CODE);
             this.setAppStatusString(StartTransactionPayer.PARAMETER_NULL_MESSAGE);
@@ -93,7 +93,6 @@ public class CompoundPayment extends VoltCompoundProcedure {
         }
 
         queueProcedureCall("StartTransactionPayer", payerId, payerAmount, txnId, effectiveDate, amounts.length + 1);
-
     }
 
     /**
@@ -133,9 +132,9 @@ public class CompoundPayment extends VoltCompoundProcedure {
      */
     private void optionallyReportErrors(ClientResponse[] resp) {
 
-        // There is no point in checking 'resp'. We've already decided things are bad...
-
-        if (hasErrors()) {
+   
+        if (! hasNoErrors(resp, StartTransactionPayer.DONE_CODE, payeeId.length + 1,
+                StartTransactionPayer.CANTFINISH)) {
             queueProcedureCall("EndSpecificTransactionWithErrors", txnId, returnAppStatus, errorList.toString());
         }
 
@@ -146,19 +145,20 @@ public class CompoundPayment extends VoltCompoundProcedure {
      */
     private void finish(ClientResponse[] resp) {
 
+        this.setAppStatusCode(returnStatusByte);
         this.setAppStatusString(returnAppStatus);
 
         if (hasErrors()) {
-            this.setAppStatusCode(statusByte);
             this.setAppStatusString(errorList.toString());
             completeProcedure(-1L);
         }
-        this.setAppStatusCode(StartTransactionPayer.DONE_CODE);
+        
         completeProcedure(0L);
 
     }
 
     private boolean hasErrors() {
+        
         if (errorList.length() > 0) {
             return true;
         }
@@ -179,25 +179,29 @@ public class CompoundPayment extends VoltCompoundProcedure {
         for (int i = 0; i < resp.length; i++) {
 
             if (resp[i].getStatus() != ClientResponse.SUCCESS) {
-                statusByte = resp[i].getStatus();
+                returnStatusByte = resp[i].getStatus();
                 errorList.append("DB Error ");
                 errorList.append(i);
                 errorList.append(' ');
+                errorList.append(returnStatusByte);
+                errorList.append(':');
                 errorList.append(resp[i].getStatusString());
                 errorList.append(':');
             } else if (resp[i].getAppStatus() != okCode) {
-                statusByte = resp[i].getAppStatus();
+                returnStatusByte = resp[i].getAppStatus();
                 errorList.append("App Error ");
                 errorList.append(i);
                 errorList.append(' ');
-                errorList.append(resp[i].getAppStatusString());
+                errorList.append(returnStatusByte);
+                errorList.append(':');
+               errorList.append(resp[i].getAppStatusString());
                 errorList.append(':');
             }
         }
 
         if (errorList.length() > 0) {
             returnAppStatus = errorStatus;
-            LOG.error(errorList.toString());
+            LOG.error(toString());
             return false;
         }
 
@@ -225,7 +229,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
         builder.append(", returnAppStatus=");
         builder.append(returnAppStatus);
         builder.append(", statusByte=");
-        builder.append(statusByte);
+        builder.append(returnStatusByte);
         builder.append("]");
         return builder.toString();
     }

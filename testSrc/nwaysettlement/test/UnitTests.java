@@ -20,6 +20,8 @@ import nwaysettlement.client.TestClient;
 
 class UnitTests {
 
+    //final String HOSTNAME = "34.249.100.202";
+    final String HOSTNAME = "localhost";
     final String[] tablesToDelete = { "user_balances", "user_transactions" };
     Client c = null;
 
@@ -34,7 +36,7 @@ class UnitTests {
     @BeforeEach
     void setUp() throws Exception {
 
-        c = TestClient.connectVoltDB("localhost");
+        c = TestClient.connectVoltDB(HOSTNAME);
         deleteData();
 
     }
@@ -49,6 +51,8 @@ class UnitTests {
 
     @Test
     void nullParams() {
+        
+        msg("nullParams");
 
         long payerId = 1;
         long txnId = 1;
@@ -73,6 +77,8 @@ class UnitTests {
     @Test
     void paramListMismatch() {
 
+        msg("paramListMismatch");
+        
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 0l };
@@ -95,6 +101,8 @@ class UnitTests {
 
     @Test
     void noPayer() {
+        
+        msg("noPayer");
 
         long payerId = 1;
         long txnId = 1;
@@ -119,6 +127,8 @@ class UnitTests {
     @Test
     void staleDate() {
 
+        msg("staleDate");
+        
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 2l, 3l };
@@ -148,6 +158,8 @@ class UnitTests {
     @Test
     void smokeTest() {
 
+        msg("smokeTest");
+        
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 2l, 3l };
@@ -159,10 +171,11 @@ class UnitTests {
         for (long element : payeeId) {
             createBalance(element, 500);
         }
-
+        
         try {
             ClientResponse cr = c.callProcedure("CompoundPayment", payerId, txnId, payeeId, amounts, effectiveDate);
             if (cr.getAppStatus() != StartTransactionPayer.DONE_CODE) {
+                msg("afterbad");
                 fail("should not get here");
             }
 
@@ -170,6 +183,7 @@ class UnitTests {
                 fail("wrong balance");
             }
 
+            msg("after2");
             if (getBalance(2) != 600) {
                 fail("wrong balance");
             }
@@ -190,6 +204,8 @@ class UnitTests {
 
     @Test
     void missingPayee() {
+        
+        msg("missingPayee");
 
         long payerId = 1;
         long txnId = 1;
@@ -221,6 +237,8 @@ class UnitTests {
 
     @Test
     void notEnoughMoney() {
+        
+        msg("notEnoughMoney");
 
         long payerId = 1;
         long txnId = 1;
@@ -250,6 +268,8 @@ class UnitTests {
 
     @Test
     void paramLengtMessage() {
+        
+        msg("paramLengtMessage");
 
         long payerId = 1;
         long txnId = 1;
@@ -273,6 +293,8 @@ class UnitTests {
 
     private void deleteData() {
 
+        msg("deleteData");
+        
         for (String element : tablesToDelete) {
             String deleteCommand = "DELETE FROM " + element + ";";
             msg(deleteCommand);
