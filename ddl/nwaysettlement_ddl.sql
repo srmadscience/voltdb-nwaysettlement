@@ -193,4 +193,3 @@ END;
 CREATE  PROCEDURE  FROM CLASS nwayprocedures.CompoundPayment;
 
 
- DROP TASK EndOrphanedTransactionsTask IF EXISTS;
