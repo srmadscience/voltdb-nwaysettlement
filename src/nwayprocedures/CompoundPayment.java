@@ -104,7 +104,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
         if (hasNoErrors(resp, StartTransactionPayer.PENDING_CODE, payeeId.length + 1,
                 StartTransactionPayer.CANTSTART)) {
             queueProcedureCall("SetPayerDone", payerId, txnId, StartTransactionPayer.PAYERDONE_MESSAGE);
-        } 
+        }
 
     }
 
@@ -132,9 +132,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
      */
     private void optionallyReportErrors(ClientResponse[] resp) {
 
-   
-        if (! hasNoErrors(resp, StartTransactionPayer.DONE_CODE, payeeId.length + 1,
-                StartTransactionPayer.CANTFINISH)) {
+        if (!hasNoErrors(resp, StartTransactionPayer.DONE_CODE, payeeId.length + 1, StartTransactionPayer.CANTFINISH)) {
             queueProcedureCall("EndSpecificTransactionWithErrors", txnId, returnAppStatus, this.toString());
         }
 
@@ -152,13 +150,13 @@ public class CompoundPayment extends VoltCompoundProcedure {
             this.setAppStatusString(errorList.toString());
             completeProcedure(-1L);
         }
-        
+
         completeProcedure(0L);
 
     }
 
     private boolean hasErrors() {
-        
+
         if (errorList.length() > 0) {
             return true;
         }
@@ -194,7 +192,7 @@ public class CompoundPayment extends VoltCompoundProcedure {
                 errorList.append(' ');
                 errorList.append(returnStatusByte);
                 errorList.append(':');
-               errorList.append(resp[i].getAppStatusString());
+                errorList.append(resp[i].getAppStatusString());
                 errorList.append(':');
             }
         }

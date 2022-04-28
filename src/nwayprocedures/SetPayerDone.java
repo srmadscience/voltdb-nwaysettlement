@@ -32,11 +32,8 @@ import org.voltdb.VoltTable;
 public class SetPayerDone extends VoltProcedure {
 
     public static final SQLStmt updateTransaction = new SQLStmt(
-            "UPDATE user_transactions SET tran_status = ? "
-            + "WHERE  userid = ? "
-            + "AND Transaction_id = ? "
-            + "AND tran_status = ?"
-            + "AND DATEADD(MILLISECOND,3,insert_date) <= NOW;");
+            "UPDATE user_transactions SET tran_status = ? " + "WHERE  userid = ? " + "AND Transaction_id = ? "
+                    + "AND tran_status = ?" + "AND DATEADD(MILLISECOND,3,insert_date) <= NOW;");
 
     public VoltTable[] run(long userId, long txnId, String oldStatus) throws VoltAbortException {
         // Find oldest pending record...

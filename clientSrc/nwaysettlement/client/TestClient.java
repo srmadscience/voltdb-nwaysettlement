@@ -100,10 +100,9 @@ public class TestClient {
 
             msg("Create " + userCount + " balances ...  done");
 
-            
             msg("DELETE FROM promBL_latency_stats;");
             c.callProcedure("@AdHoc", "DELETE FROM promBL_latency_stats;");
-            
+
             msg("DELETE FROM user_transactions;");
             c.callProcedure("@AdHoc", "DELETE FROM user_transactions;");
 
@@ -162,9 +161,9 @@ public class TestClient {
                 }
 
             }
-            
+
             getStats(statsCache, c, delay, participants);
-            
+
             c.drain();
             c2.drain();
 
@@ -196,18 +195,17 @@ public class TestClient {
 
     private static void getStats(SafeHistogramCache statsCache, Client c, int delay, int participants)
             throws IOException, NoConnectionsException, ProcCallException {
-        String[] statNames = { "DONE", "FAIL","PENDING","PAYERDONE" };
+        String[] statNames = { "DONE", "FAIL", "PENDING", "PAYERDONE" };
 
-   
         reportStats(c, "delay", "delay", "processing_lag_ms", "planned", delay);
         reportStats(c, "size", "size", "number_participants", "participants", participants);
-        
-          float[] pctiles = { 50, 90, 95, 99, 99.5f, 99.95f, 100 };
+
+        float[] pctiles = { 50, 90, 95, 99, 99.5f, 99.95f, 100 };
 
         for (String statName : statNames) {
 
             StatsHistogram aHistogram = statsCache.get(statName);
-            
+
             reportStats(c, "avg", "avg", "AVG_LATENCY", statName, (long) aHistogram.getLatencyAverage());
 
             for (float pctile : pctiles) {
@@ -222,16 +220,15 @@ public class TestClient {
 
     private static void getZeroedStats(SafeHistogramCache statsCache, Client c)
             throws IOException, NoConnectionsException, ProcCallException {
-        String[] statNames = { "DONE", "FAIL","PENDING","PAYERDONE" };
+        String[] statNames = { "DONE", "FAIL", "PENDING", "PAYERDONE" };
 
         reportStats(c, "delay", "delay", "processing_lag_ms", "planned", 0);
         reportStats(c, "size", "size", "number_participants", "participants", 0);
 
- 
         float[] pctiles = { 50, 90, 95, 99, 99.5f, 99.95f, 100 };
 
         for (String statName : statNames) {
-            
+
             reportStats(c, "avg", "avg", "AVG_LATENCY", statName, 0);
 
             for (float pctile : pctiles) {

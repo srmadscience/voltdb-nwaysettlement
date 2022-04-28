@@ -20,7 +20,7 @@ import nwaysettlement.client.TestClient;
 
 class UnitTests {
 
-    //final String HOSTNAME = "34.249.100.202";
+    // final String HOSTNAME = "34.249.100.202";
     final String HOSTNAME = "localhost";
     final String[] tablesToDelete = { "user_balances", "user_transactions" };
     Client c = null;
@@ -51,7 +51,7 @@ class UnitTests {
 
     @Test
     void nullParams() {
-        
+
         msg("nullParams");
 
         long payerId = 1;
@@ -78,7 +78,7 @@ class UnitTests {
     void paramListMismatch() {
 
         msg("paramListMismatch");
-        
+
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 0l };
@@ -101,7 +101,7 @@ class UnitTests {
 
     @Test
     void noPayer() {
-        
+
         msg("noPayer");
 
         long payerId = 1;
@@ -128,7 +128,7 @@ class UnitTests {
     void staleDate() {
 
         msg("staleDate");
-        
+
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 2l, 3l };
@@ -159,7 +159,7 @@ class UnitTests {
     void smokeTest() {
 
         msg("smokeTest");
-        
+
         long payerId = 1;
         long txnId = 1;
         long[] payeeId = { 2l, 3l };
@@ -171,7 +171,7 @@ class UnitTests {
         for (long element : payeeId) {
             createBalance(element, 500);
         }
-        
+
         try {
             ClientResponse cr = c.callProcedure("CompoundPayment", payerId, txnId, payeeId, amounts, effectiveDate);
             if (cr.getAppStatus() != StartTransactionPayer.DONE_CODE) {
@@ -199,12 +199,10 @@ class UnitTests {
         }
 
     }
-    
-   
 
     @Test
     void missingPayee() {
-        
+
         msg("missingPayee");
 
         long payerId = 1;
@@ -237,7 +235,7 @@ class UnitTests {
 
     @Test
     void notEnoughMoney() {
-        
+
         msg("notEnoughMoney");
 
         long payerId = 1;
@@ -268,7 +266,7 @@ class UnitTests {
 
     @Test
     void paramLengtMessage() {
-        
+
         msg("paramLengtMessage");
 
         long payerId = 1;
@@ -294,7 +292,7 @@ class UnitTests {
     private void deleteData() {
 
         msg("deleteData");
-        
+
         for (String element : tablesToDelete) {
             String deleteCommand = "DELETE FROM " + element + ";";
             msg(deleteCommand);
