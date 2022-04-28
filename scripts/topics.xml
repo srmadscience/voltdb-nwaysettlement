@@ -1,0 +1,4 @@
+<topics enabled="true">
+<topic name="transaction_failures_topic"/>
+<topic name="transaction_fixes_topic"/>
+</topics>
