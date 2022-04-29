@@ -24,7 +24,9 @@ Create table user_transactions
 ,done_date timestamp
 ,PRIMARY KEY (Userid,Transaction_id));
 
-CREATE INDEX ut_ix1 ON user_transactions (Transaction_id);
+CREATE INDEX ut_ix1 ON user_transactions (Transaction_id,tran_status);
+
+CREATE INDEX ut_ix2 ON user_transactions (Userid,tran_status);
 
 CREATE INDEX ut_ix3 ON user_transactions (tran_status,insert_date);
 
@@ -59,6 +61,7 @@ from user_transactions group by tran_status;
 create view transaction_changes as
 select Transaction_id, sum(tran_amount) net_tran_amount, sum(user_count) planned_participants, count(*) actual_participants
 from user_transactions
+WHERE tran_status IN ('PENDING','PAYERDONE','DONE')
 group by Transaction_id;
 
 -- Used for manaul checking after test runs
@@ -134,9 +137,9 @@ CREATE PROCEDURE
    FROM CLASS nwayprocedures.EndOrphanedTransactions;  
    
 CREATE TASK EndOrphanedTransactionsTask 
-ON SCHEDULE DELAY 500 MILLISECONDS
+ON SCHEDULE DELAY 100 MILLISECONDS
 PROCEDURE  EndOrphanedTransactions
-WITH ('100', '6000') 
+WITH ('100', '10000') 
 ON ERROR LOG RUN ON DATABASE ENABLE;   
 
    

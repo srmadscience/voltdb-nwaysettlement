@@ -41,19 +41,21 @@ public class EndOrphanedTransactions extends VoltProcedure {
                     + "WHERE tran_status = 'PAYERDONE'  " + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
 
     public static final SQLStmt getPayerdoneTransactionStatus = new SQLStmt(
-            "SELECT * FROM transaction_changes WHERE Transaction_id = ?; ");
+            "SELECT * FROM transaction_changes WHERE Transaction_id = ? ; ");
 
     public static final SQLStmt finishTransaction = new SQLStmt(
-            "UPDATE user_transactions SET tran_status = 'DONE', done_date = NOW, queue_date = null, user_count = null "
-                    + "WHERE  userid = ? AND Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
+            "UPDATE user_transactions SET tran_status = 'DONE', tran_status_explanation = ?, "
+            + "done_date = NOW, queue_date = null "
+                    + "WHERE  Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
 
     public static final SQLStmt getStalePendingTransactions = new SQLStmt(
             "SELECT userid, Transaction_id, effective_date, insert_date " + "FROM user_transactions t "
                     + "WHERE tran_status = 'PENDING' " + "ORDER BY insert_date, Transaction_id, userid LIMIT ?; ");
 
     public static final SQLStmt cancelTransaction = new SQLStmt(
-            "UPDATE user_transactions SET tran_status = 'FAILED', done_date = NOW, queue_date = null, user_count = null "
-                    + "WHERE  userid = ? AND Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
+            "UPDATE user_transactions SET tran_status = 'FAILED', tran_status_explanation = ?, "
+            + "done_date = NOW, queue_date = null, user_count = null "
+                    + "WHERE Transaction_id = ? AND tran_status IN ('PENDING','PAYERDONE');");
 
     public static final SQLStmt reportFailures = new SQLStmt(
             "INSERT INTO transaction_failures(Transaction_id,Effective_date,tran_status,desc) VALUES (?,?,?,?);");
@@ -119,14 +121,14 @@ public class EndOrphanedTransactions extends VoltProcedure {
 
                     if (isSafeToFinish(txId)) {
 
-                        voltQueueSQL(finishTransaction, userId, txId);
+                        voltQueueSQL(finishTransaction, "Completed by EndOrphanedTransactions", txId);
                         voltQueueSQL(reportFixes, txId, this.getTransactionTime(), "DONE",
                                 "PAYERDONE, Completed by EndOrphanedTransactions");
                         finishedTxCount++;
 
                     } else {
 
-                        voltQueueSQL(cancelTransaction, userId, txId);
+                        voltQueueSQL(cancelTransaction, "Cancelled by EndOrphanedTransactions", txId);
                         voltQueueSQL(reportFailures, txId, this.getTransactionTime(), StartTransactionPayer.STALE,
                                 "PAYERDONE, Cancelled by EndOrphanedTransactions. Started at " + insertDate.toString());
                         cantFinishTxCount++;
@@ -141,8 +143,15 @@ public class EndOrphanedTransactions extends VoltProcedure {
                     finishedTxCount);
             voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "cantFinishTx",
                     cantFinishTxCount);
-            voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "payerDoneLag",
-                    this.getTransactionTime().getTime() - firstPayerDone.asExactJavaDate().getTime());
+            if (firstPayerDone == null) {
+                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "payerDoneLag",
+                        0);
+               
+            } else {
+                voltQueueSQL(upsertStat, "EndTransactions", "EndTransactions", "internalmeasurement", "payerDoneLag",
+                        this.getTransactionTime().getTime() - firstPayerDone.asExactJavaDate().getTime());
+               
+            }
 
             voltExecuteSQL();
         }
@@ -172,10 +181,11 @@ public class EndOrphanedTransactions extends VoltProcedure {
                     firstStalePending = effectiveDate;
                 }
 
-                voltQueueSQL(cancelTransaction, staleRecords.getLong("userid"), staleRecords.getLong("Transaction_id"));
+                voltQueueSQL(cancelTransaction,  "Cancelled by EndOrphanedTransactions",staleRecords.getLong("Transaction_id"));
                 voltQueueSQL(reportFailures, staleRecords.getLong("Transaction_id"), this.getTransactionTime(),
                         StartTransactionPayer.STALE,
                         "PENDING, Cancelled by EndOrphanedTransactions. Started at " + insertDate.toString());
+                LOG.error("txId " + staleRecords.getLong("Transaction_id") + "PENDING, Cancelled by EndOrphanedTransactions. Started at " + insertDate.toString());
 
             }
 
