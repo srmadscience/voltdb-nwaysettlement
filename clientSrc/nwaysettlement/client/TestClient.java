@@ -67,8 +67,9 @@ public class TestClient {
             msg("offset=" + offset);
 
             int tpThisMs = 0;
+            final long startMs = System.currentTimeMillis();
             long currentMs = System.currentTimeMillis();
-            long lastQueryMs = System.currentTimeMillis();
+                       long lastQueryMs = System.currentTimeMillis();
 
             // NwayTransactionChecker theChecker = new NwayTransactionChecker(c2,
             // processingtime);
@@ -166,6 +167,11 @@ public class TestClient {
 
             c.drain();
             c2.drain();
+            
+            
+            long actualTps = txnId / ((System.currentTimeMillis() - startMs)/1000);
+            
+            msg(txnId + "Transactions done. Actual TPS = " + actualTps);
 
             for (int i = 0; i < 2; i++) {
                 Thread.sleep(1000);
