@@ -28,6 +28,11 @@ public class TestClient {
 
     public static void main(String[] args) {
         try {
+            
+            if (args.length != 8) {
+                msg("Usage: hosts tpms usercount trancount delay processingtime participants offset");
+                System.exit(1);
+            }
 
             msg(Arrays.toString(args));
             SafeHistogramCache statsCache = SafeHistogramCache.getInstance();
