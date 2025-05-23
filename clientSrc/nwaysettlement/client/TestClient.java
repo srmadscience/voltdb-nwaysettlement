@@ -158,7 +158,7 @@ public class TestClient {
             
             long actualTps = txnId / ((System.currentTimeMillis() - startMs)/1000);
             
-            msg(txnId + "Transactions done. Actual TPS = " + actualTps);
+            msg(txnId + " Transactions done. Actual TPS = " + actualTps);
 
             for (int i = 0; i < 2; i++) {
                 Thread.sleep(1000);

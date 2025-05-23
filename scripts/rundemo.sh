@@ -1,0 +1,25 @@
+#!/bin/sh
+
+
+if
+ 	[ "$#" = 0 ]
+then
+	echo Using defaults...
+	TPMS=3
+	ACCOUNTS=100000
+	TRANSACTIONS=1000000
+	DELAY=3
+	PROCTIME=600
+	PARTICIPANTS=3
+	OFFSET=0
+else
+	TPMS=$1
+	ACCOUNTS=$2
+	TRANSACTIONS=$3
+	DELAY=$4
+	PROCTIME=$5
+	PARTICIPANTS=$6
+	OFFSET=$7
+fi
+
+java -jar ${JVMOPTS} ../jars/NWayClient.jar `cat $HOME/.vdbhostnames` $TPMS $ACCOUNTS   $TRANSACTIONS   $DELAY   $PROCTIME   $PARTICIPANTS   $OFFSET   
