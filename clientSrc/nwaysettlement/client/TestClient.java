@@ -56,9 +56,6 @@ public class TestClient {
             long currentMs = System.currentTimeMillis();
                        long lastQueryMs = System.currentTimeMillis();
 
-            // NwayTransactionChecker theChecker = new NwayTransactionChecker(c2,
-            // processingtime);
-
             NullCallback nc = new NullCallback();
 
             msg("Create " + userCount + " balances");
@@ -248,7 +245,6 @@ public class TestClient {
 
             config = new ClientConfig(); // "admin", "idontknow");
             config.setTopologyChangeAware(true);
-            config.setReconnectOnConnectionLoss(true);
 
             client = ClientFactory.createClient(config);
 

@@ -120,7 +120,7 @@ CREATE PROCEDURE
    FROM CLASS nwayprocedures.GetBalance; 
    
 
-CREATE  PROCEDURE  FROM CLASS nwayprocedures.CompoundPayment;
+CREATE COMPOUND PROCEDURE  FROM CLASS nwayprocedures.CompoundPayment;
    
 CREATE PROCEDURE GetStats__promBL AS
 BEGIN
